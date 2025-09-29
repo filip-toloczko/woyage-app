@@ -29,10 +29,11 @@ class Response(BaseModel):
 async def generate_followups(request: Request):
     try:
         #creating the system message
-        chatGPT_prompt = """You are an interviewer. Your job is to generate one or more concise, relevant follow up questions with brief rationals.
+        chatGPT_prompt = """You are an interviewer. Your job is to generate one or more concise, relevant follow up questions with brief rationales.
+        Do not ask any PII, do not encourage illegal activity, do not generate harassing content, keep everything professional.
         Make sure to look into gaps or interesting points in their response. Make sure to be precise and specific. Ask questions that will 
         help to demonstrate the candidates skills and previous experience. Sound natural and conversational, as a human interviewer would.
-        Make sure to only return the followup question, nothing else."""
+        Make sure to only one or more followup questions and a brief rationale, nothing else."""
 
         #creating the user's message to chatgpt
         user_message = f"Original Question: {request.question}.\nCandidate's Answer: {request.answer}"
@@ -48,7 +49,8 @@ async def generate_followups(request: Request):
                 {"role": "system", "content": chatGPT_prompt},
                 {"role": "user", "content": user_message}
             ],
-            max_tokens=250
+            max_tokens=250,
+            temperature=0.7
         )
 
         #extract follow up question and return the response
@@ -56,7 +58,7 @@ async def generate_followups(request: Request):
 
         return Response(
             result="success",
-            message="Follow-up question generated",
+            message="Follow-up question generated.",
             data={"followup_question":followup_question},
         )
     
@@ -68,7 +70,4 @@ async def generate_followups(request: Request):
     
 @app.get("/")
 async def root():
-    return {"status": "ok", "message": "Interview Follow-up Generator API"}
-    
-
-
+    return {"message": "API is running, please visit /docs for interactive docs"}
