@@ -1,8 +1,8 @@
+import os
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from openai import AsyncOpenAI
 from typing import Optional, List
-import os
 from dotenv import load_dotenv
 
 #loading in my openAI api key
@@ -39,7 +39,7 @@ async def generate_followups(request: Request):
         if request.role:
             user_message += f"\nRole being interviewed for: {request.role}"
         if request.interview_type:
-            user_message += f"\nInterview Type: {request.role}"
+            user_message += f"\nInterview Type: {request.interview_type}"
         user_message += "\nGenerate one follow up question"
 
         response = await client.chat.completions.create(
@@ -47,18 +47,28 @@ async def generate_followups(request: Request):
             messages=[
                 {"role": "system", "content": chatGPT_prompt},
                 {"role": "user", "content": user_message}
-            ]
+            ],
             max_tokens=250
         )
 
+        #extract follow up question and return the response
         followup_question = response.choices[0].message.content.strip()
 
         return Response(
             result="success",
             message="Follow-up question generated",
-            data={"followup_question":followup_question}
+            data={"followup_question":followup_question},
         )
-
-        
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating follow up question: {str(e)}"
+        )
+    
+@app.get("/")
+async def root():
+    return {"status": "ok", "message": "Interview Follow-up Generator API"}
+    
 
 
